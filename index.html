@@ -214,7 +214,7 @@
                 <div class="bars">
                     <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
                 </div>
-                <div id="now-playing-text" style="font-weight: bold; color: var(--spotify-green);">Musik spielt (Schleife)...</div>
+                <div id="now-playing-text" style="font-weight: bold; color: var(--spotify-green);">Musik spielt ...</div>
             </div>
 
             <div id="reader"></div>
@@ -393,9 +393,9 @@
                         console.warn("Endlosschleife konnte nicht gesetzt werden:", repeatError);
                     }
 
-                    showToast("Erfolgreich! Lied startet (Endlosschleife).", "success");
+                    showToast("Erfolgreich! Lied startet.", "success");
                     nowPlaying.style.display = "block";
-                    nowPlayingText.textContent = "Musik spielt (Schleife)...";
+                    nowPlayingText.textContent = "Musik spielt ...";
                     
                     document.querySelectorAll('.bar').forEach(bar => bar.style.animationPlayState = 'running');
                 } else {
