@@ -196,18 +196,19 @@
         <!-- Scanner Bereich -->
         <div id="scanner-container" class="hidden">
             
-            <!-- Mobile Workaround Setup-Box (Zweistufig) -->
+            <!-- Mobile Workaround Setup-Box (ohne Button) -->
             <div id="mobile-setup-box" style="margin-bottom: 25px; background: rgba(29, 185, 84, 0.1); padding: 15px; border-radius: 12px; border: 1px solid var(--spotify-green);">
-                <p style="margin-top: 0; color: white; font-weight: bold; font-size: 16px;">Schritt 1: Browser-Audio aktivieren</p>
-                <p style="font-size: 14px; margin-bottom: 15px;">Damit das Handy nicht in die App wechselt:<br><br>1. Halte den folgenden Link <b>lange gedrückt</b> und wähle <b>"In neuem Tab öffnen"</b> (oder "Im Hintergrund öffnen").</p>
+                <p style="margin-top: 0; color: white; font-weight: bold; font-size: 16px;">Vorbereitung (für Smartphones)</p>
+                <p style="font-size: 14px; margin-bottom: 15px;">1. Halte den folgenden Link <b>lange gedrückt</b> und wähle <b>"In neuem Tab öffnen"</b> (oder "Im Hintergrund öffnen").</p>
                 
                 <a href="https://open.spotify.com" target="_blank" style="display: block; background: #333; color: white; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-bottom: 20px;">🔗 open.spotify.com (Lange drücken)</a>
                 
-                <p style="font-size: 14px; margin-bottom: 15px;">2. Wenn der Tab im Hintergrund offen ist, klicke hier:</p>
-                <button id="wake-up-btn" class="btn-highlight" style="margin-top: 0; padding: 12px 20px; font-size: 16px; width: 100%;">🎵 System aufwecken</button>
+                <p style="font-size: 14px; margin-bottom: 15px;">2. Starte in dem neuen Tab kurz ein beliebiges Lied. Kehre dann in diesen Tab zurück.</p>
+                
+                <p style="font-size: 16px; margin-bottom: 0; font-weight: bold; color: var(--spotify-green);">3. Das Spiel kann starten!</p>
             </div>
 
-            <p id="instruction-text">Scanne einen QR-Code für den nächsten Song.</p>
+            <p id="instruction-text">Scanne jetzt deine Karte für den nächsten Song.</p>
             
             <div id="now-playing">
                 <div class="bars">
@@ -243,7 +244,6 @@
             "song_001": "spotify:track:4cOdK2wGLETKBW3PvgPWqT", // Rick Astley
             "song_002": "spotify:track:3AJwUDP919kvQ9QcozQPxg", // Coldplay
             "song_003": "spotify:track:4u7EnebtmKWzUH433cf5Qv"  // Queen
-            // Weitere Lieder hier im gleichen Format hinzufügen...
         };
 
         // ==========================================
@@ -255,6 +255,7 @@
         const nowPlayingText = document.getElementById('now-playing-text');
         const toastContainer = document.getElementById('toast-container');
         const playPauseBtn = document.getElementById('play-pause-btn');
+        const mobileSetupBox = document.getElementById('mobile-setup-box');
         
         let html5QrcodeScanner = null;
         let isProcessingScan = false;
@@ -443,23 +444,17 @@
         });
 
         // ==========================================
-        // 6. QR SCANNER & NEUER TAB-WORKAROUND
+        // 6. QR SCANNER & TAB-WORKAROUND
         // ==========================================
         
-        // Button: System aufwecken (nachdem der Nutzer den Tab manuell geöffnet hat)
-        document.getElementById('wake-up-btn').addEventListener('click', () => {
-            // Verstecke die Box
-            document.getElementById('mobile-setup-box').style.display = 'none';
-            showToast("Sende Start-Signal an den Browser-Tab...", "info");
-            
-            // Ein Testlied abspielen, um die Wiedergabe zu aktivieren
-            const testSong = Object.values(songDatabase)[0];
-            playOnSpotify(testSong);
-        });
-
         async function onScanSuccess(decodedText) {
             if (isProcessingScan) return; 
             isProcessingScan = true; 
+            
+            // Blende die Anleitung nach dem ersten Scan für den Rest des Spiels aus
+            if (mobileSetupBox) {
+                mobileSetupBox.style.display = 'none';
+            }
             
             showToast("Code erkannt! Lade Song...", "info");
             
