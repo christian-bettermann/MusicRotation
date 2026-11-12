@@ -333,7 +333,27 @@
             showToast("Verbinde mit Spotify...", "info");
 
             try {
-                const response = await fetch('https://api.spotify.com/v1/me/player/play', {
+                // NEU: 1. Hole alle aktiven Spotify-Geräte in deinem Account
+                const devicesRes = await fetch('https://api.spotify.com/v1/me/player/devices', {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                const devicesData = await devicesRes.json();
+                
+                let deviceIdQuery = "";
+                if (devicesData && devicesData.devices && devicesData.devices.length > 0) {
+                    // Suche das aktuell spielende/aktive Gerät
+                    const activeDevice = devicesData.devices.find(d => d.is_active);
+                    // Falls Spotify gerade pausiert ist, nimm das zuletzt genutzte (Smartphone)
+                    const targetDevice = activeDevice || devicesData.devices[0]; 
+                    
+                    deviceIdQuery = `?device_id=${targetDevice.id}`;
+                    console.log(`🎵 Sende Befehl gezielt an Gerät: ${targetDevice.name} (${targetDevice.type})`);
+                } else {
+                    console.warn("⚠️ Kein aktives Gerät gefunden. Sende blinden Befehl...");
+                }
+
+                // NEU: 2. Hänge die Geräte-ID an die URL an
+                const response = await fetch(`https://api.spotify.com/v1/me/player/play${deviceIdQuery}`, {
                     method: 'PUT',
                     body: JSON.stringify({ uris: [uri] }),
                     headers: {
@@ -345,10 +365,10 @@
                 if (response.ok || response.status === 204) {
                     showToast("Erfolgreich! Lied startet.", "success");
                     nowPlaying.style.display = "block";
-                    // Animation nach 10 Sekunden wieder ausblenden
                     setTimeout(() => { nowPlaying.style.display = "none"; }, 10000);
                 } else {
                     const errorData = await response.json();
+                    console.error("Spotify API Error:", errorData);
                     if (response.status === 403) {
                         showToast("Premium nötig oder kein aktives Gerät.", "error");
                     } else if (response.status === 404) {
@@ -358,49 +378,12 @@
                     }
                 }
             } catch (error) {
+                console.error("Playback Error:", error);
                 showToast("Netzwerkfehler. Bitte Internetverbindung prüfen.", "error");
             }
 
-            // Nach 4 Sekunden Scannen wieder erlauben
+            // Scanner nach 4 Sekunden wieder freigeben
             setTimeout(() => { isProcessingScan = false; }, 4000);
-        }
-
-        function onScanSuccess(decodedText) {
-            // Wenn gerade schon ein Scan verarbeitet wird, diesen ignorieren (verhindert Spam/Fehler)
-            if (isProcessingScan) return; 
-            
-            isProcessingScan = true;
-            console.log(`Scan erfolgreich: ${decodedText}`);
-            
-            // WICHTIG: Kein html5QrcodeScanner.pause() mehr! Das verursacht den Crash beim Bild-Upload.
-            
-            const spotifyUri = songDatabase[decodedText];
-            if (spotifyUri) {
-                playOnSpotify(spotifyUri);
-            } else {
-                showToast(`Code "${decodedText}" nicht in Datenbank!`, "error");
-                setTimeout(() => { isProcessingScan = false; }, 3000);
-            }
-        }
-
-        function initApp() {
-            loginContainer.classList.add('hidden');
-            scannerContainer.classList.remove('hidden');
-
-            if (!html5QrcodeScanner) {
-                html5QrcodeScanner = new Html5QrcodeScanner(
-                    "reader", 
-                    { 
-                        fps: 10, 
-                        qrbox: { width: 250, height: 250 },
-                        aspectRatio: 1.0
-                    }, 
-                    false
-                );
-                
-                // onScanFailure wird ignoriert, da es in jedem Frame ohne QR-Code triggert
-                html5QrcodeScanner.render(onScanSuccess, () => {});
-            }
         }
 
         // ==========================================
